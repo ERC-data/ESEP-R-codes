@@ -1,8 +1,5 @@
-# 9 june 2016
-# Bryce Mccall
 # SANEDI DSM project 
 # This is a script to read in timeslice data and produce load profiles
-
 # 18 Jan 2017 Bryce: This script works, the plotting however does not reflect the adjusted max_peak demand. The reason is the adjustment happens 
 # is the adjustment happens after the adjustment. 
 
