@@ -1,7 +1,6 @@
 # SANEDI DSM project 
-# This is a script to read in timeslice data and produce load profiles
-# 18 Jan 2017 Bryce: This script works, the plotting however does not reflect the adjusted max_peak demand. The reason is the adjustment happens 
-# is the adjustment happens after the adjustment. 
+# This is a script to read in timeslice data and produce load profiles matching the timeslices for SATIM
+# writes a csv file with 'loadDataSmry' which is the aggregated timeslice data. 
 
 library(XLConnect)
 library(reshape2)
@@ -108,7 +107,8 @@ dataiswideformat = 0 #is data long or wide format. Not properly incorporated. Po
 #filepath locations
   datafilepath = "C:/Users/01425453/Desktop/WindProfiles/WindProfileData.csv" # location of the data. 
   TSfilepath = "C:/Users/01425453/Desktop/WindProfiles/timeslice_data.xlsx"# location of user defined Timeslices
-
+  saveCSVFilePath = "C:/Users/01425453/Desktop/WindProfiles" #where you want to save the sliced up data. 
+  
 #read in dataset and user timeslice designation from excel    
   loadData = read.csv(datafilepath,stringsAsFactors = F) 
   ts_table_seasons = readWorksheetFromFile(TSfilepath,sheet = 'Seasons')
@@ -251,7 +251,9 @@ dataiswideformat = 0 #is data long or wide format. Not properly incorporated. Po
         #if dont adjust, we need to have the same column name
         loadDataSmry$DataVar_avg_new = loadDataSmry$DataVar_avg
       }
-      
+
+#write the CSV file
+write.csv(loadDataSmry,paste(saveCSVFilePath,'Data in TimeSlice format.csv',sep ='/'))
 #PLOTTING
       
 #plotting load curve for each season+daytype by HOURLY
