@@ -12,13 +12,12 @@ library(lubridate)
 
 getTSID = function(srch,tstab){
   # essentially takes the date/day of year (doy) etc. and returns the id depending on if you want dayid,seasonid,blockid etc. 
-  
   #srch is the input number to get the associated season or daytype id. for daytypes this would be number of the day of week, for seasontype 
-    #this would be the day number of the year ie, 1 is 1st day of year, 365 is the last. 
-  
+  #this would be the day number of the year ie, 1 is 1st day of year, 365 is the last. 
   #tstab is 's', 'd' or 'nd' etc. for season day or datename
-  
   #returned is the seasontype id, or daytype id for the associated tstab = 'm' or 'd'. 
+  
+  #Update: only some of this function is used now. Havent cleaned out the useless bits yet. 
   
   if(tstab == 's'){#srch is doy => return the season id for this
     #is srch in season ranges
@@ -96,14 +95,14 @@ getTSID = function(srch,tstab){
 }
 
 
-#         need data in format
+#         need data in format:
 
 # Date                 | DataVar
-# datestamp (anyformat)| value
+# datestamp (anyformat)| value (integer or double)
 
 scalefactor =1 # use this to convert MWh to GWh etc.
-AdjustForPeak = 0 # 1 = yes, 0 = no. Do you want to adjust for the peak getting averaged over during calcs? ie. insert the peak into the Timeslices
-dataiswideformat = 0 #is data long or wide format
+AdjustForPeak = 0 # 1 = yes, 0 = no. Do you want to adjust for the peak getting averaged over during calcs? ie. insert the peak into the Timeslices (loadDataSmry) at the end. 
+dataiswideformat = 0 #is data long or wide format. Not properly incorporated. Porbably going to take this out and just have all data in long format. 
 
 
 #filepath locations
@@ -149,7 +148,9 @@ dataiswideformat = 0 #is data long or wide format
   
   #add columns for the day/month/year
     loadData$year = year(loadData$Date)
-    loadData = loadData[loadData$year == loadData[1,'year'],] #get only one year's worth of the data. it complicates dates summerising 'coz of month 1 day 1 in 2009<> month 1 day 1 in 2010 
+    loadData = loadData[loadData$year == loadData[1,'year'],] #get only the first year's worth of the data. Aggregating over diff years can be tricky
+                                                              #(day of year 10 in year1 may not be same weekday as day of year 10 in year 2), and isnt 
+                                                              #incorporated here. 
     loadData$month = month(loadData$Date)
     loadData$wday = wday(loadData$Date)-1# 1 IS monday
     loadData$doy = yday(loadData$Date)
@@ -172,17 +173,16 @@ dataiswideformat = 0 #is data long or wide format
 #APPLYING USER DEFINED TIMESLICE PROFILES
   
   #get and add the corresponding Season and daytype IDs for months and days respectively:
-  #automatic by month:
   
     #add season detail
     loadData$SeasonID = mapply(getTSID,loadData$doy,'s') #this is removed, this is if we specify months. 
     loadData$SeasonName = mapply(getTSID,loadData$SeasonID,'ns')
     
     #add day detail
-    
     loadData = merge(loadData,blockids,by.x = c('SeasonID','wday','hour'),by.y = c('SeasonID','wday','hour'),all.x = T)
     names(loadData)[names(loadData)=='SeasonName.x'] = 'SeasonName' #seasonname.x and y are from merge. removing the one. 
-    #make full seasonname
+    
+    #make full seasonname - joining the season and daytype names
     loadData$SeasonName = paste(loadData$SeasonName,loadData$DayTypeName,sep = '-')
     loadData = loadData[,!(names(loadData)%in% c('DayTypeName','SeasonName.y'))] #remove these names
   
@@ -199,7 +199,7 @@ dataiswideformat = 0 #is data long or wide format
         loadData.long$max = (loadData.long$DataVar == max(loadData.long$DataVar))
     }
 
-#Join the ID's together:
+#Join the ID's together for full Timeslice ID
   loadDataFull = loadData
   loadDataFull$SDB = paste(paste(paste('S',loadDataFull$SeasonID,sep= ''),paste('D',loadDataFull$DayID,sep =''),sep =''),paste('B',loadDataFull$BlockID,sep = ''),sep = '')
 
@@ -233,11 +233,9 @@ dataiswideformat = 0 #is data long or wide format
         loadDataSmry = as.data.frame(loadDataSmry)
         maxSDB = loadDataFull[loadDataFull$max == TRUE,(names(loadDataFull)%in% c('SDB'))] #the SDB ID associated with peak
     
-        loadDataSmry$DataVarShare = loadDataSmry$DataVar_sum/sum(loadDataSmry[loadDataSmry$SDB != maxSDB,'DataVar_sum'])
-        
+        loadDataSmry$DataVarShare = loadDataSmry$DataVar_sum/sum(loadDataSmry[loadDataSmry$SDB != maxSDB,'DataVar_sum']) #calculate shares (of energy)
         loadDataSmry$DataVar_wPeak = loadDataSmry$DataVar_avg
-        #insert the peak into the right place
-        loadDataSmry[loadDataSmry$SDB == maxSDB,'DataVar_wPeak'] = loadDataFull[loadDataFull$max == TRUE,'DataVar']
+        loadDataSmry[loadDataSmry$SDB == maxSDB,'DataVar_wPeak'] = loadDataFull[loadDataFull$max == TRUE,'DataVar'] #insert the peak into the right place
       
       #calculate the new GWh after adjusting for peak
       loadDataSmry$DataVar_new = loadDataSmry$DataVar_wPeak*loadDataSmry$hrcount/scalefactor
