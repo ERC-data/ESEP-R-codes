@@ -255,12 +255,19 @@ dataiswideformat = 0 #is data long or wide format. Not properly incorporated. Po
 #write the CSV file
 write.csv(loadDataSmry,paste(saveCSVFilePath,'Data in TimeSlice format.csv',sep ='/'))
 #PLOTTING
-      
+     
 #plotting load curve for each season+daytype by HOURLY
   plotdat = loadDataHR
   #plot all seasons by hour:
   #NOTE: this is not peak adjusted - its loadDataHR, not loadDataSmry which has the peak adjustment
   profilePlot <- ggplot(plotdat,aes(x = hour,y = DataVar_avg,group = SeasonName,color = SeasonName))+geom_line(size = 1.2)
+  
+#hourly avg. plotted with block timeslices overlayed
+  SDB_hr = loadDataFull %>% group_by(SeasonID,DayID,BlockID,SeasonName)%>% summarise(DataVar_sdb = mean(DataVar))
+  course_and_fine_profile = merge(loadDataHR,SDB_hr)
+  loadPlot = ggplot(course_and_fine_profile)+geom_line(aes(x= hour,y = DataVar_avg,color = SeasonName))+geom_step(aes(x = hour, y = DataVar_sdb,color = SeasonName),size = 2)
+  
+  
   plotdat = loadDataSmry
 #plotting load duration curve (incomplete)
   dat = loadDataSmry
