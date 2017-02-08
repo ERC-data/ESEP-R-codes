@@ -99,6 +99,7 @@ getTSID = function(srch,tstab){
 # Date                 | DataVar
 # datestamp (anyformat)| value (integer or double)
 
+nameThisWorkOfYours= 'WindProfile20ts'
 scalefactor =1 # use this to convert MWh to GWh etc.
 AdjustForPeak = 0 # 1 = yes, 0 = no. Do you want to adjust for the peak getting averaged over during calcs? ie. insert the peak into the Timeslices (loadDataSmry) at the end. 
 dataiswideformat = 0 #is data long or wide format. Not properly incorporated. Porbably going to take this out and just have all data in long format. 
@@ -106,8 +107,8 @@ dataiswideformat = 0 #is data long or wide format. Not properly incorporated. Po
 
 #filepath locations
   datafilepath = "C:/Users/01425453/Desktop/WindProfiles/WindProfileData.csv" # location of the data. 
-  TSfilepath = "C:/Users/01425453/Desktop/WindProfiles/timeslice_data.xlsx"# location of user defined Timeslices
-  saveCSVFilePath = "C:/Users/01425453/Desktop/WindProfiles" #where you want to save the sliced up data. 
+  TSfilepath = "C:/Users/01425453/Google Drive/SATIM/R codes and outputs/Timeslicer SANEDI/timeslice_data.xlsx"# location of user defined Timeslices
+  saveCSVFilePath = "C:/Users/01425453/Google Drive/SATIM/R codes and outputs/Timeslicer SANEDI" #where you want to save the sliced up data. 
   
 #read in dataset and user timeslice designation from excel    
   loadData = read.csv(datafilepath,stringsAsFactors = F) 
@@ -253,7 +254,7 @@ dataiswideformat = 0 #is data long or wide format. Not properly incorporated. Po
       }
 
 #write the CSV file
-write.csv(loadDataSmry,paste(saveCSVFilePath,'Data in TimeSlice format.csv',sep ='/'))
+write.csv(loadDataSmry,paste(saveCSVFilePath,paste(nameThisWorkOfYours,'.csv',sep=''),sep ='/'))
 #PLOTTING
      
 #plotting load curve for each season+daytype by HOURLY
@@ -265,7 +266,9 @@ write.csv(loadDataSmry,paste(saveCSVFilePath,'Data in TimeSlice format.csv',sep 
 #hourly avg. plotted with block timeslices overlayed
   SDB_hr = loadDataFull %>% group_by(SeasonID,DayID,BlockID,SeasonName)%>% summarise(DataVar_sdb = mean(DataVar))
   course_and_fine_profile = merge(loadDataHR,SDB_hr)
-  loadPlot = ggplot(course_and_fine_profile)+geom_line(aes(x= hour,y = DataVar_avg,color = SeasonName))+geom_step(aes(x = hour, y = DataVar_sdb,color = SeasonName),size = 2)
+  loadPlot = ggplot(course_and_fine_profile)+geom_line(aes(x= hour,y = DataVar_avg,color = SeasonName))+geom_step(aes(x = hour, y = DataVar_sdb,color = SeasonName),size = 2)+
+    facet_grid(~SeasonName)
+  ggsave(paste(saveCSVFilePath,paste(nameThisWorkOfYours,'.png',sep=''),sep ='/'),loadPlot,width = 20,height = 15)
   
   
   plotdat = loadDataSmry
