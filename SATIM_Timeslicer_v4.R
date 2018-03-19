@@ -99,14 +99,14 @@ getTSID = function(srch,tstab){
 # Date                 | DataVar
 # datestamp (anyformat)| value (integer or double)
 
-nameThisWorkOfYours= 'WindProfile20ts'
+nameThisWorkOfYours= 'SolarProfile8ts'
 scalefactor =1 # use this to convert MWh to GWh etc.
 AdjustForPeak = 0 # 1 = yes, 0 = no. Do you want to adjust for the peak getting averaged over during calcs? ie. insert the peak into the Timeslices (loadDataSmry) at the end. 
 dataiswideformat = 0 #is data long or wide format. Not properly incorporated. Porbably going to take this out and just have all data in long format. 
 
 
 #filepath locations
-  datafilepath = "C:/Users/01425453/Desktop/WindProfiles/WindProfileData.csv" # location of the data. 
+  datafilepath = "C:/Users/01425453/Desktop/SolarProfiles/RE_dispatch_data.csv" # location of the data. 
   TSfilepath = "C:/Users/01425453/Google Drive/SATIM/R codes and outputs/Timeslicer SANEDI/timeslice_data.xlsx"# location of user defined Timeslices
   saveCSVFilePath = "C:/Users/01425453/Google Drive/SATIM/R codes and outputs/Timeslicer SANEDI" #where you want to save the sliced up data. 
   
@@ -114,6 +114,15 @@ dataiswideformat = 0 #is data long or wide format. Not properly incorporated. Po
   loadData = read.csv(datafilepath,stringsAsFactors = F) 
   ts_table_seasons = readWorksheetFromFile(TSfilepath,sheet = 'Seasons')
   ts_table_days = readWorksheetFromFile(TSfilepath,sheet = 'Days')
+
+#Make any modifications to the data here
+  loadData[,c(3,4,5,6,7,8)] = sapply(loadData[,c(3,4,5,6,7,8)],as.numeric)
+  loadData[is.na(loadData)] = 0
+  loadData$DATE = as.Date(loadData$DATE)
+  
+  loadData = loadData %>% mutate(PV_cf = PV_kWh/PV_kW,wind_cf = Wind_kWh/Wind_kW)
+  
+  
   
 #convert ts_table_days into long format: expanding over wday
   ts_table_days2 = data.frame()
@@ -270,8 +279,6 @@ write.csv(loadDataSmry,paste(saveCSVFilePath,paste(nameThisWorkOfYours,'.csv',se
     facet_grid(~SeasonName)
   ggsave(paste(saveCSVFilePath,paste(nameThisWorkOfYours,'.png',sep=''),sep ='/'),loadPlot,width = 20,height = 15)
   
-  
-  plotdat = loadDataSmry
 #plotting load duration curve (incomplete)
   dat = loadDataSmry
   dat = dat[order(dat$DataVar_avg_new,decreasing = TRUE),]
