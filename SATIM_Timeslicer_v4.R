@@ -107,17 +107,19 @@ dataiswideformat = 0 #is data long or wide format. Not properly incorporated. Po
 
 #filepath locations
 
-datafileLocationPath = "C:/Users/01425453/Google Drive/Work/Projects Current/IFPRI/wind and solar profiles/" # location of the data. 
-TSfilepath = paste("C:/Users/01425453/Google Drive/SATIM/R codes and outputs/Timeslicer SANEDI","timeslice_data_8ts.xlsx",sep = "/") # location of user defined Timeslices
+datafileLocationPath = "C:/Users/01425453/Documents/R/ESEP-R-codes/" # location of the data. 
+TSfilepath = paste(datafileLocationPath,"timeslice_data_8ts.xlsx",sep = "/") # location of user defined Timeslices
 saveCSVFilePath = datafileLocationPath #"C:/Users/01425453/Google Drive/SATIM/R codes and outputs/Timeslicer SANEDI" #where you want to save the sliced up data. 
 
-datafilename = "PV_SA_AggregatedProfile_100MW.csv"
+datafilename = "exampleData.csv"
 datafilePath = paste(datafileLocationPath,datafilename,sep = "/")
 
 #read in dataset   
 loadData = read.csv(datafilePath,stringsAsFactors = F) 
 
 #DATA CLEANING
+# get this exampleData into the format required
+
 loadData$Date = paste(loadData$Year,loadData$Month,paste(loadData$Day,loadData$Period,sep = " "),sep = "-")
 loadData$Date = paste(loadData$Date,":00",sep ='')
 loadData$Date = ymd_hm(loadData$Date)
@@ -155,15 +157,10 @@ names(x)[names(x)%in%c('variable','value')] = c('hour','BlockID')
 blockids = x
 blockids$hour = as.numeric(gsub('X','',blockids$hour))#remove those silly X's
 
-#add day of week and season ID's to the dataset
-#loadData$Date = loadData$Date + 60 #add one minute to shift all dates to match the excel TIMESLICES dates 
-#loadData$Date = as.Date(loadData$Date,"%y/%m/%d %H:%M")#convert the date data to date format in R
-
-#loadData$Date = as.POSIXlt(loadData$Date,format = "%y%m%d %H:%M")#convert the date data to date format in R
-
 #add columns for the day/month/year
 loadData$year = year(loadData$Date)
 loadData = loadData[loadData$year == loadData[1,'year'],] #get only the first year's worth of the data. Aggregating over diff years can be tricky
+
 #(day of year 10 in year1 may not be same weekday as day of year 10 in year 2), and isnt 
 #incorporated here. 
 loadData$month = month(loadData$Date)
